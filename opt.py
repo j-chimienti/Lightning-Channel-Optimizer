@@ -212,16 +212,16 @@ def display_new_neighbors(G, new_neighbors):
     print_neighbors(new_neighbors)
 
 
-def print_neighbors(new_neighbors):
-    node_alias = [];
-    num_channels = [];
+def print_neighbors(neighbors):
+    node_alias = []
+    num_channels = []
     ip_address = []
-    for i in range(len(new_neighbors)):
-        nd = nodes_table[nodes_table['nodeid'] == new_neighbors[i]]
+    for i in range(len(neighbors)):
+        nd = nodes_table[nodes_table['nodeid'] == neighbors[i]]
         node_alias.append(str(list(nd.alias)[0]))
-        num_channels.append(len(list(G.neighbors(new_neighbors[i]))))
+        num_channels.append(len(list(G.neighbors(neighbors[i]))))
         ip_address.append(list(nd['addresses'])[0][0]['address'])
-        print("node ID: " + new_neighbors[i])
+        print("node ID: " + neighbors[i])
         print("node alias: " + node_alias[i])
         print("number of channels: " + str(num_channels[i]) + "\n")
 
@@ -237,12 +237,12 @@ def suggest_nodes(centrality_measure="closeness", num_channels_to_make=2):
         G, centrality_measure, num_channels_to_make)
     display_new_neighbors(G, new_neighbors)
 
+def show_poor_neighbors(degree = 5, num_channels_to_make = 2):
     global poor_neighbors
     print(new_neighbors)
-    poor_neighbors = pick_poor_connected_nodes(G, 5, num_channels_to_make)
+    poor_neighbors = pick_poor_connected_nodes(G, degree, num_channels_to_make)
     print("poor neighbors")
     print_neighbors(poor_neighbors)
-
 
 def plot_suggested_nodes():
     G_new = make_graph_with_new_neighbors(G, new_neighbors, my_node_id)
@@ -287,6 +287,7 @@ centrality_measures = {
 }
 
 suggest_nodes(centrality_measures['casual'], 2)
+show_poor_neighbors(5, 2)
 
 # plot_suggested_nodes()
 
