@@ -233,8 +233,7 @@ def suggest_nodes(centrality_measure="closeness", num_channels_to_make=2):
 
 
 def suggest_poor_nodes(degree=5, num_channels_to_make=2):
-    global poor_neighbors
-    print(new_neighbors)
+    # global poor_neighbors
     poor_neighbors = pick_poor_connected_nodes(G, degree, num_channels_to_make)
     print("poor neighbors")
     print_neighbors(poor_neighbors)
