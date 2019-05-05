@@ -67,22 +67,22 @@ def get_data():
 
 
 # CONNECT TO SELECTED NODES
-def connect_to_new_neighbors(new_neighbors, channel_capacity_sats):
-    node_alias = [];
-    num_channels = [];
+def connect_to_new_neighbors(neighbors, channel_capacity_sats):
+    node_alias = []
+    num_channels = []
     ip_address = []
-    for i in range(len(new_neighbors)):
-        nd = nodes_table[nodes_table['nodeid'] == new_neighbors[i]]
+    for i in range(len(neighbors)):
+        nd = nodes_table[nodes_table['nodeid'] == neighbors[i]]
         node_alias.append(str(list(nd.alias)[0]))
-        num_channels.append(len(list(G.neighbors(new_neighbors[i]))))
+        num_channels.append(len(list(G.neighbors(neighbors[i]))))
         ip_address.append(list(nd['addresses'])[0][0]['address'])
 
         print("Setting up payment channel with " + node_alias[i] + "\n")
-        connect = "%s connect %s@%s".format(ln_cli, new_neighbors[i], ip_address[i])
+        connect = "%s connect %s@%s".format(ln_cli, neighbors[i], ip_address[i])
         print(connect)
         # os.system(connect);
 
-        fund_channel = "%s fundchannel %s %s".format(ln_cli, new_neighbors[i], str(channel_capacity_sats))
+        fund_channel = "%s fundchannel %s %s".format(ln_cli, neighbors[i], str(channel_capacity_sats))
 
 
 #         print(fund_channel)
@@ -198,18 +198,12 @@ def get_main_subgraph(G):
 
 
 # CREATE NEW GRAPH WITH NEW NODE AND EDGES
-def make_graph_with_new_neighbors(G, new_neighbors, new_node_id):
+def make_graph_with_new_neighbors(G, neighbors, new_node_id):
     G_new = G.copy()
     G_new.add_node(new_node_id)
-    new_edges = [(new_node_id, i) for i in new_neighbors]
+    new_edges = [(new_node_id, i) for i in neighbors]
     G_new.add_edges_from(new_edges)
     return (G_new)
-
-
-# DISPLAY NEW NEIGHBOR INFO
-def display_new_neighbors(G, new_neighbors):
-    print("Here are some potential nodes to connect to:\n")
-    print_neighbors(new_neighbors)
 
 
 def print_neighbors(neighbors):
@@ -235,14 +229,16 @@ def suggest_nodes(centrality_measure="closeness", num_channels_to_make=2):
     global new_neighbors
     new_neighbors = pick_highest_metric_nodes(
         G, centrality_measure, num_channels_to_make)
-    display_new_neighbors(G, new_neighbors)
+    print_neighbors(new_neighbors)
 
-def show_poor_neighbors(degree = 5, num_channels_to_make = 2):
+
+def suggest_poor_nodes(degree=5, num_channels_to_make=2):
     global poor_neighbors
     print(new_neighbors)
     poor_neighbors = pick_poor_connected_nodes(G, degree, num_channels_to_make)
     print("poor neighbors")
     print_neighbors(poor_neighbors)
+
 
 def plot_suggested_nodes():
     G_new = make_graph_with_new_neighbors(G, new_neighbors, my_node_id)
@@ -276,9 +272,7 @@ def connect_nodes():
 
 get_data()
 
-
 # ### Suggest nodes to form payment channels with
-
 
 
 centrality_measures = {
@@ -287,7 +281,7 @@ centrality_measures = {
 }
 
 suggest_nodes(centrality_measures['casual'], 2)
-show_poor_neighbors(5, 2)
+suggest_poor_nodes(5, 2)
 
 # plot_suggested_nodes()
 
