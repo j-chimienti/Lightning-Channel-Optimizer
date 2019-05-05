@@ -237,6 +237,7 @@ def suggest_nodes(centrality_measure="closeness", num_channels_to_make=2):
         G, centrality_measure, num_channels_to_make)
     display_new_neighbors(G, new_neighbors)
 
+    global poor_neighbors
     print(new_neighbors)
     poor_neighbors = pick_poor_connected_nodes(G, 5, num_channels_to_make)
     print("poor neighbors")
@@ -277,6 +278,8 @@ get_data()
 
 
 # ### Suggest nodes to form payment channels with
+
+
 
 centrality_measures = {
     "business": "betweenness",
