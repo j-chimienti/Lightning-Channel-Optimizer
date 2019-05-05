@@ -240,7 +240,7 @@ def suggest_nodes(centrality_measure="closeness", num_channels_to_make=2):
     print(new_neighbors)
     poor_neighbors = pick_poor_connected_nodes(G, 5, num_channels_to_make)
     print("poor neighbors")
-    print(poor_neighbors)
+    print_neighbors(poor_neighbors)
 
 
 def plot_suggested_nodes():
@@ -285,7 +285,7 @@ centrality_measures = {
 
 suggest_nodes(centrality_measures['casual'], 2)
 
-plot_suggested_nodes()
+# plot_suggested_nodes()
 
 # display(suggest_node_button)
 
