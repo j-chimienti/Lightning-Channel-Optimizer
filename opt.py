@@ -36,10 +36,12 @@ def call_ln():
     listnodes = "{} listnodes > list_of_nodes.json".format(ln_cli)
     listchannels = "{} listchannels > list_of_channels.json".format(ln_cli)
     getinfo = "{} getinfo > info.json".format(ln_cli)
+    getInvoices = "{} listinvoices > listinvoices.json".format(ln_cli)
 
     os.system(listnodes)
     os.system(listchannels)
     os.system(getinfo)
+    os.system(getInvoices)
 
 
 # c-lightning FUNCTIONS
@@ -53,11 +55,11 @@ def get_data():
     # call_ln()
 
     # LOAD AND FORMAT DATA
-    nodes_temp = pd.read_json('./demo_April_17list_of_nodes.json')
+    nodes_temp = pd.read_json('./data/lightning-chan-opt/list_of_nodes.json')
     nodes_table = json_normalize(nodes_temp['nodes'])
-    channels_temp = pd.read_json('./demo_April_17list_of_channels.json')
+    channels_temp = pd.read_json('./data/lightning-chan-opt/list_of_channels.json')
     channels_table = json_normalize(channels_temp['channels'])
-    with open("./demo_April_17info.json") as json_data:
+    with open("./data/lightning-chan-opt/info.json") as json_data:
         info = json.load(json_data)
     my_node_id = info['id']
 
@@ -91,6 +93,8 @@ def connect_to_new_neighbors(neighbors, channel_capacity_sats):
         # os.system(connect);
 
         fund_channel = "%s fundchannel %s %s".format(ln_cli, neighbors[i], str(channel_capacity_sats))
+
+        print(fund_channel)
 
 
 #         print(fund_channel)
@@ -219,7 +223,7 @@ def make_graph_with_new_neighbors(G, neighbors, new_node_id):
     G_new.add_node(new_node_id)
     new_edges = [(new_node_id, i) for i in neighbors]
     G_new.add_edges_from(new_edges)
-    return (G_new)
+    return G_new
 
 
 def print_neighbors(neighbors):
@@ -247,6 +251,7 @@ def suggest_nodes(centrality_measure="closeness", num_channels_to_make=2):
     new_neighbors = pick_highest_metric_nodes(
         G, centrality_measure, num_channels_to_make)
     print_neighbors(new_neighbors)
+    return new_neighbors
 
 
 def suggest_poor_nodes(degree=5, num_channels_to_make=2):
@@ -260,7 +265,7 @@ def suggest_poor_nodes(degree=5, num_channels_to_make=2):
 def plot_suggested_nodes():
     print("plot nodes")
     G_new = make_graph_with_new_neighbors(G, new_neighbors, my_node_id)
-    return plot_new_node_summary_fig(G_new, new_node_id=my_node_id, edge_radius=2)
+    plot_new_node_summary_fig(G_new, new_node_id=my_node_id, edge_radius=2)
 
 
 def connect_nodes():
@@ -288,8 +293,6 @@ if __name__ == '__main__':
     parser.add_argument("--capacity", type=int, default=20000)
     args = parser.parse_args()
 
-
-
     get_data()
 
     # ### Suggest nodes to form payment channels with
@@ -301,5 +304,9 @@ if __name__ == '__main__':
 
     suggest_nodes(centrality_measures['casual'], 5)
 
-    #plot_ego_graph()
+    # plot_ego_graph()
     plot_suggested_nodes()
+
+    # plot_ego_graph(ax, G, new_node_id, centrality_measure, edge_radius):
+
+    #connect_to_new_neighbors(n, 20000)
