@@ -3,6 +3,8 @@
 
 
 # IMPORT LIBRARIES
+import argparse
+
 import numpy as np
 import pandas as pd
 import seaborn as sns
@@ -13,6 +15,7 @@ from random import choice
 import random
 import networkx as nx
 import os
+import io
 import json
 from pandas.io.json import json_normalize
 import collections
@@ -28,14 +31,8 @@ ln_cli = "docker exec -ti btcpayserver_clightning_bitcoin lightning-cli"
 
 # FUNCTIONS
 
-# c-lightning FUNCTIONS
-# GET DATA
-def get_data():
-    global lightning_dir
-    global nodes_table
-    global channels_table
-    global my_node_id
 
+def call_ln():
     listnodes = "{} listnodes > list_of_nodes.json".format(ln_cli)
     listchannels = "{} listchannels > list_of_channels.json".format(ln_cli)
     getinfo = "{} getinfo > info.json".format(ln_cli)
@@ -44,12 +41,23 @@ def get_data():
     os.system(listchannels)
     os.system(getinfo)
 
+
+# c-lightning FUNCTIONS
+# GET DATA
+def get_data():
+    global lightning_dir
+    global nodes_table
+    global channels_table
+    global my_node_id
+
+    # call_ln()
+
     # LOAD AND FORMAT DATA
-    nodes_temp = pd.read_json('./list_of_nodes.json')
+    nodes_temp = pd.read_json('./demo_April_17list_of_nodes.json')
     nodes_table = json_normalize(nodes_temp['nodes'])
-    channels_temp = pd.read_json('./list_of_channels.json')
+    channels_temp = pd.read_json('./demo_April_17list_of_channels.json')
     channels_table = json_normalize(channels_temp['channels'])
-    with open("./info.json") as json_data:
+    with open("./demo_April_17info.json") as json_data:
         info = json.load(json_data)
     my_node_id = info['id']
 
@@ -63,7 +71,7 @@ def get_data():
 
     print('Number of nodes = ' + str(len(G.nodes())))
     print('Number of edges (payment channels) = ' + str(len(G.edges())))
-    print('node ID: ' + my_node_id)
+    print('node ID = ' + my_node_id)
 
 
 # CONNECT TO SELECTED NODES
@@ -97,7 +105,7 @@ def pick_highest_metric_nodes(G, centrality_measure, num_channels_to_make):
     centrality_dict = get_centrality_dict(G, centrality_measure)
     centrality_list = [(id, centrality_dict.get(id)) for id in centrality_dict]
     sorted_by_second = sorted(centrality_list, key=lambda tup: tup[1], reverse=True)  # Sort by betweenness centrality
-    return [id for id, val in sorted_by_second[0: (num_channels_to_make)]]
+    return [id for id, val in sorted_by_second[0: num_channels_to_make]]
 
 
 def pick_poor_connected_nodes(G, min_degree, num_channels_to_make):
@@ -183,6 +191,14 @@ def plot_new_node_summary_fig(G, new_node_id, edge_radius):
 
     plt.show()
 
+    bytes_image = io.BytesIO()
+
+    plt.savefig(bytes_image, format="png")
+
+    bytes_image.seek(0)
+    print(bytes_image)
+    return bytes_image
+
 
 # NETWORKX FUNCTIONS
 
@@ -227,6 +243,7 @@ def print_neighbors(neighbors):
 
 def suggest_nodes(centrality_measure="closeness", num_channels_to_make=2):
     global new_neighbors
+    print("suggest nodes")
     new_neighbors = pick_highest_metric_nodes(
         G, centrality_measure, num_channels_to_make)
     print_neighbors(new_neighbors)
@@ -234,65 +251,55 @@ def suggest_nodes(centrality_measure="closeness", num_channels_to_make=2):
 
 def suggest_poor_nodes(degree=5, num_channels_to_make=2):
     # global poor_neighbors
+    print("calculating poor neighbors")
     poor_neighbors = pick_poor_connected_nodes(G, degree, num_channels_to_make)
-    print("poor neighbors")
+    print("poor neighbors:")
     print_neighbors(poor_neighbors)
 
 
 def plot_suggested_nodes():
+    print("plot nodes")
     G_new = make_graph_with_new_neighbors(G, new_neighbors, my_node_id)
-    plot_new_node_summary_fig(G_new, new_node_id=my_node_id, edge_radius=2)
+    return plot_new_node_summary_fig(G_new, new_node_id=my_node_id, edge_radius=2)
 
 
 def connect_nodes():
     connect_to_new_neighbors(new_neighbors, channel_capacity_sats=20000)
 
 
-# def preset_casual(b):
-#     centrality_buttons.value = 'closeness'
-#     payment_channel_slider.value = 2
-#     channel_capacity_text.value = 20000
-# # preset_casual_button.on_click(preset_casual)
-#
-#
-# def preset_business(b):
-#     centrality_buttons.value = 'betweenness'
-#     payment_channel_slider.value = 50
-#     channel_capacity_text.value = 10000000
-# # preset_business_button.on_click(preset_business)
-
-
-# # Lightning Payment Channel Optimizer
-#
-# ### Get Lightning Network Data
-
-# In[5]:
-
-
-get_data()
-
-# ### Suggest nodes to form payment channels with
-
-
-centrality_measures = {
-    "business": "betweenness",
-    "casual": "closeness"
+presets = {
+    "casual": {
+        "centrality": "closeness",
+        "paymment_channels": 2,
+        "capacity": 20000
+    },
+    "business": {
+        "centrality": "betweenness",
+        "paymment_channels": 50,
+        "capacity": 10000000
+    }
 }
 
-suggest_nodes(centrality_measures['casual'], 2)
-suggest_poor_nodes(5, 2)
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
 
-# plot_suggested_nodes()
-
-# display(suggest_node_button)
-
-
-# ### Visualize suggested payment channels
+    parser.add_argument("--centrality", type=str, default="betweenness")
+    parser.add_argument("--num", type=str, default=5)
+    parser.add_argument("--capacity", type=int, default=20000)
+    args = parser.parse_args()
 
 
-# display(plot_suggested_nodes_button)
 
+    get_data()
 
-# ### Set up suggested payment channels
+    # ### Suggest nodes to form payment channels with
 
-# display(connect_to_node_button)
+    centrality_measures = {
+        "business": "betweenness",
+        "casual": "closeness"
+    }
+
+    suggest_nodes(centrality_measures['casual'], 5)
+
+    #plot_ego_graph()
+    plot_suggested_nodes()
