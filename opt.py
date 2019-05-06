@@ -36,12 +36,12 @@ def call_ln():
     listnodes = "{} listnodes > list_of_nodes.json".format(ln_cli)
     listchannels = "{} listchannels > list_of_channels.json".format(ln_cli)
     getinfo = "{} getinfo > info.json".format(ln_cli)
-    getInvoices = "{} listinvoices > listinvoices.json".format(ln_cli)
+    listinvoices = "{} listinvoices > listinvoices.json".format(ln_cli)
 
     os.system(listnodes)
     os.system(listchannels)
     os.system(getinfo)
-    os.system(getInvoices)
+    os.system(listinvoices)
 
 
 # c-lightning FUNCTIONS
