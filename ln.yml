@@ -1,0 +1,23 @@
+- hosts: lightning_node
+  become: yes
+  gather_facts: no
+  vars:
+    lightning_tasks:
+    - listinvoices
+    - listchannels
+    - listpeers
+    - listnodes
+    - getinfo
+    - listforwards
+  tasks:
+  - name: fetch LN info
+    with_items: "{{ lightning_tasks }}"
+    # use shell over command to utilize > |
+    shell: "{{ lightning_cli }} {{ item }} > /tmp/{{ item }}.json"
+  - name: return files
+    with_items: "{{ lightning_tasks }}"
+    fetch:
+      src: "/tmp/{{ item }}.json"
+      dest: "./data/{{ item }}.json"
+      flat: yes
+

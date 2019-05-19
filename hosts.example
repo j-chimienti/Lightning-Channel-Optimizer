@@ -1,0 +1,5 @@
+[hostname]
+123.56.789 lightning_cli="docker exec -it btcpayserver_clightning_bitcoin lightning-cli" ansible_become_pass="password1"
+
+[local]
+localhost lightning_cli="lightning-cli"
