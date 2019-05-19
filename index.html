@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>LN Channel Optimizer</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.8.1/css/all.min.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootswatch/4.3.1/lumen/bootstrap.css"
+          crossorigin="anonymous" />
+    <script src="http://d3js.org/d3.v3.min.js"></script>
+
+    <style>
+        body {
+
+            font-size: 2rem;
+        }
+        p {
+
+
+        }
+    </style>
+
+</head>
+
+<body>
+
+<nav class="navbar navbar-dark bg-primary mb-3">
+    <div class="container">
+        <a class="navbar-brand" href="#">
+            <h1>LN Channel Optimizer</h1>
+        </a>
+    </div>
+</nav>
+
+<div class="container">
+
+<section id="node_info">
+  <div class="card">
+      <div class="card-body">
+          <p>
+              Number of nodes =
+              <span id="num_of_nodes"
+                    class="text-monospace"
+              >
+
+    </span>
+          </p>
+          <p>
+              Number of payment channels =
+              <span id="num_of_channels"
+                    class="text-monospace"
+              >
+
+    </span>
+          </p>
+          <p>
+              Node ID =
+              <span id="node_id"
+                    class="text-monospace"
+              >
+    </span>
+          </p>
+      </div>
+  </div>
+</section>
+
+<img
+        width="100%"
+        id="node_summary_img"
+        alt="node summary" />
+
+<section id="suggested_nodes">
+    <h2 class="my-3 font-weight-bold text-uppercase">
+        Best Nodes
+        <!--<button id="suggest_nodes" class="text-uppercase ml-2 btn btn-primary">-->
+            <!--Suggested-->
+        <!--</button>-->
+    </h2>
+
+
+    <ul class="list-group" id="suggested_nodes_list">
+    </ul>
+
+    <h2 class="my-3 font-weight-bold text-uppercase">
+        Worst Nodes
+        <!--<button id="suggest_nodes" class="text-uppercase ml-2 btn btn-primary">-->
+        <!--Suggested-->
+        <!--</button>-->
+    </h2>
+
+    <ul class="list-group" id="poor_nodes_list">
+    </ul>
+</section>
+
+</div>
+<script>
+    const num_of_nodes = document.getElementById("num_of_nodes")
+    const num_of_channels = document.getElementById("num_of_channels")
+    const node_id = document.getElementById("node_id")
+    const suggested_nodes_list = document.getElementById("suggested_nodes_list")
+    const poor_nodes_list = document.getElementById("poor_nodes_list")
+    const node_summary_img = document.getElementById("node_summary_img")
+
+    // Change to true to test w/o calling LN
+    const dryRun = false
+    const dataDir = dryRun ? "./demo" : "./data"
+    node_summary_img.src = `${dataDir}/node_summary.png`
+
+    d3.json(`${dataDir}/poornodes.json`, data => {
+
+        if (!(data && Array.isArray(data) && data.length)) {
+            //throw new Error("Missing poor nodes file")
+            console.log("Missing poor nodes file")
+            return;
+        }
+        const list = data.slice(0, 10).map(node => {
+            const [id, centrality] = node
+            const listItem = `<li class='list-group-item'>${id}</li>`
+            return listItem
+        }).join("")
+        poor_nodes_list.innerHTML = list
+
+    })
+    d3.json(`${dataDir}/nodeinfo.json`, data => {
+        if (!data) {
+            throw new Error("Invalid file")
+        }
+        const {nodes, edges, id} = data
+        num_of_nodes.innerText = nodes
+        num_of_channels.innerText = edges
+        node_id.innerText = id
+    })
+    d3.json(`${dataDir}/listpeers.json`, data => {
+       if (!(data && 'peers' in data && Array.isArray(data.peers) && data.peers.length)) {
+           throw new Error("Invalid file")
+       }
+       d3.json(`${dataDir}/suggest_nodes.json`, suggestNodes => {
+           if (!(suggestNodes && Array.isArray(suggestNodes) && suggestNodes.length)) {
+               throw new Error("Invalid file")
+           }
+           const list = suggestNodes.map(item => {
+               const isPeer = data.peers.find(peer => peer.id === item.id)
+               const peerKlass = isPeer ? "success" : "info"
+               const peerIcon = isPeer ? "fa-user-o" : "fa-close-o"
+               const peerText = isPeer ? "PEER" : "SUGGESTED PEER"
+               // <p>Channels = <span>${item.channels}</span></p>
+               const listItem = `<li class="list-group-item ">
+                <p>Alias = <span>${item.alias}</span>
+
+
+                <span class="mr-0">
+                 <span class="rounded p-2 bg-${peerKlass}">${peerText}</span>
+                <i class="badge badge-${peerKlass}"></i>
+                    <i class="fa ${peerIcon}"></i>
+</span>
+
+                </p>
+                <p>Node ID = <small>${item.id}</small></p>
+            </li>`
+               return listItem
+
+           }).join("")
+
+
+           suggested_nodes_list.innerHTML = list
+        })
+   })
+
+</script>
+</body>
+</html>

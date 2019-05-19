@@ -1,0 +1,27 @@
+- hosts: lightning_node
+  become: yes
+  vars:
+    nodes:
+    - {'id': '02cdf83ef8e45908b1092125d25c68dcec7751ca8d39f557775cd842e5bc127469', 'connected': True, 'netaddr': ['109.239.79.181:9735'], 'global_features': '', 'local_features': '82', 'globalfeatures': '', 'localfeatures': '82', 'channels': []}
+  tasks:
+  - debug:
+      var: nodes
+  - name: connect to nodes
+    with_items: "{{ nodes }}"
+    command: "{{ lightning_cli }} connect {{ item['id'] | quote }}@{{ item['netaddr'] | quote }}"
+    register: connect_result
+  - name: fund node channels
+    with_items: "{{ nodes }}"
+    command: "{{ lightning_cli }} fundchannel {{ item['id'] | quote }} {{ item['capacity'] | quote }}"
+    register: fund_node_result
+  - name: withdrawal
+    # withdraw destination satoshi [feerate] [minconf]
+    # Send to {destination} address {satoshi} (or 'all') amount via Bitcoin transaction, at optional {feerate}
+    command: "{{ lightning_cli }} withdraw {{ destination | quote }} {{ satoshi | quote }} {{ feerate | quote }}"
+    tags: withdrawal
+    register: wd_result
+  - debug:
+      msg: "{{ fund_node_result['results'][0]['stdout_lines'] }}"
+
+
+
